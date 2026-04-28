@@ -7,7 +7,14 @@ import { WC_EVENTS } from "./util/worlds";
 import "./App.css";
 
 const App: React.FC = () => {
-  const [value, setValue] = useState<string>("");
+  const [value, setValue] = useState<string>(
+    () => sessionStorage.getItem("teamList") ?? ""
+  );
+
+  const handleChange = (newValue: string) => {
+    sessionStorage.setItem("teamList", newValue);
+    setValue(newValue);
+  };
 
   const { data: eventOne } = useEvent(WC_EVENTS[0]);
   const { data: eventTwo } = useEvent(WC_EVENTS[1]);
@@ -69,7 +76,7 @@ const App: React.FC = () => {
           className="w-full h-40 p-2 border rounded"
           placeholder="Enter team numbers, one per line"
           value={value}
-          onChange={(e) => setValue(e.target.value)}
+          onChange={(e) => handleChange(e.target.value)}
         />
         <div className="mt-4">
           <h2 className="text-xl font-bold mb-2">Teams:</h2>
