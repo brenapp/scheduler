@@ -1,8 +1,13 @@
 import { useMemo, useState } from "react";
+import { useQueries } from "react-query";
 import TeamAssignmentItem, {
   DivisionAssignment,
 } from "./components/TeamAssignmentItem";
-import { useEvent, useEventTeamsByDivision } from "./util/eventHooks";
+import {
+  getUseEventMatchesForTeamQueryParams,
+  useEvent,
+  useEventTeamsByDivision,
+} from "./util/eventHooks";
 import { WC_EVENTS } from "./util/worlds";
 import "./App.css";
 
@@ -68,6 +73,34 @@ const App: React.FC = () => {
     return mapping;
   }, [teamsByDivisionOne, eventOne, teamsByDivisionTwo, eventTwo]);
 
+  const matchQueries = useQueries(
+    teams.map((team) =>
+      getUseEventMatchesForTeamQueryParams(
+        assignmentByTeam[team]?.event,
+        assignmentByTeam[team]?.teamData
+      )
+    )
+  );
+
+  const now = Date.now();
+  const sortedTeams = teams
+    .map((team, index) => {
+      const matches = matchQueries[index]?.data;
+      let upcomingMatchTime = Infinity;
+      if (matches && matches.length > 0) {
+        const upcoming = matches.find(
+          (m) => m.scheduled && new Date(m.scheduled).getTime() >= now
+        );
+        const match = upcoming ?? matches[0];
+        if (match?.scheduled) {
+          upcomingMatchTime = new Date(match.scheduled).getTime();
+        }
+      }
+      return { team, upcomingMatchTime };
+    })
+    .sort((a, b) => a.upcomingMatchTime - b.upcomingMatchTime)
+    .map(({ team }) => team);
+
   return (
     <>
       <header></header>
@@ -81,7 +114,7 @@ const App: React.FC = () => {
         <div className="mt-4">
           <h2 className="text-xl font-bold mb-2">Teams:</h2>
           <ul className="list-disc list-inside">
-            {teams.map((team, index) => (
+            {sortedTeams.map((team, index) => (
               <TeamAssignmentItem
                 key={`${team}-${index}`}
                 teamNumber={team}
