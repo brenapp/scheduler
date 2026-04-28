@@ -11,10 +11,23 @@ import {
 import { WC_EVENTS } from "./util/worlds";
 import "./App.css";
 
+const getInitialValue = (): string => {
+  const params = new URLSearchParams(window.location.search);
+  const queryTeams = params.get("teams");
+  if (queryTeams !== null) {
+    const normalized = queryTeams
+      .split(/[\n,]+/)
+      .map((t) => t.trim())
+      .filter((t) => t !== "")
+      .join("\n");
+    sessionStorage.setItem("teamList", normalized);
+    return normalized;
+  }
+  return sessionStorage.getItem("teamList") ?? "";
+};
+
 const App: React.FC = () => {
-  const [value, setValue] = useState<string>(
-    () => sessionStorage.getItem("teamList") ?? ""
-  );
+  const [value, setValue] = useState<string>(getInitialValue);
 
   const handleChange = (newValue: string) => {
     sessionStorage.setItem("teamList", newValue);
