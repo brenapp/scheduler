@@ -82,26 +82,24 @@ const App: React.FC = () => {
     )
   );
 
-  const sortedTeams = useMemo(() => {
-    const now = Date.now();
-    return teams
-      .map((team, index) => {
-        const matches = matchQueries[index]?.data;
-        let upcomingMatchTime = Infinity;
-        if (matches && matches.length > 0) {
-          const upcoming = matches.find(
-            (m) => m.scheduled && new Date(m.scheduled).getTime() >= now
-          );
-          const match = upcoming ?? matches[0];
-          if (match?.scheduled) {
-            upcomingMatchTime = new Date(match.scheduled).getTime();
-          }
+  const now = Date.now();
+  const sortedTeams = teams
+    .map((team, index) => {
+      const matches = matchQueries[index]?.data;
+      let upcomingMatchTime = Infinity;
+      if (matches && matches.length > 0) {
+        const upcoming = matches.find(
+          (m) => m.scheduled && new Date(m.scheduled).getTime() >= now
+        );
+        const match = upcoming ?? matches[0];
+        if (match?.scheduled) {
+          upcomingMatchTime = new Date(match.scheduled).getTime();
         }
-        return { team, upcomingMatchTime };
-      })
-      .sort((a, b) => a.upcomingMatchTime - b.upcomingMatchTime)
-      .map(({ team }) => team);
-  }, [teams, matchQueries]);
+      }
+      return { team, upcomingMatchTime };
+    })
+    .sort((a, b) => a.upcomingMatchTime - b.upcomingMatchTime)
+    .map(({ team }) => team);
 
   return (
     <>
