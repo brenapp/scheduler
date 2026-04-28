@@ -1,7 +1,7 @@
 import * as robotevents from "robotevents";
-import { UseQueryResult, useQuery } from "react-query";
+import { useQuery, UseQueryOptions, UseQueryResult } from "react-query";
 import { useMemo } from "react";
-import { Grade, Team, Award, Ranking, Skill, Event } from "robotevents";
+import { Award, Event, Grade, Ranking, Skill, Team } from "robotevents";
 
 const ROBOTEVENTS_TOKEN =
   "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIzIiwianRpIjoiYjM5Y2I1NGNhMTk0OTM0ODNmNTc0MDQ2MTRhZDY0MDZjYTY1ZmQzMjAzNDlhMmM5YmUwOThlNmJjNzhhZWJmZmZjYzU0ZWY2MTQ2ZmQyYjEiLCJpYXQiOjE2ODc2NDIzODcuNTUwMjg4LCJuYmYiOjE2ODc2NDIzODcuNTUwMjkxMSwiZXhwIjoyNjM0NDE3MTg3LjUzNzIzNjIsInN1YiI6Ijk3MDY5Iiwic2NvcGVzIjpbXX0.k0DEt3QRKkgZnyV8X9mDf6VYyc8aOsIEfQbVN4Gi6Csr7O5ILLGFENXZouvplqbcMDdQ8gBMMLg5hIR38RmrTsKcWHMndq1T8wYkGZQfRhc_uZYLQhGQCaanf_F_-gnKocFwT1AKQJmAPkAbV-Itb2UzHeGpNuW8vV_TaNL3coaYvmM6rubwBuNYgyZhTHW_Mgvzh5-XBqqGpmQLm9TGl4gkeqnS-6a5PfoqRTc8v3CQWSCURFry5BA2oXz0lcWmq92FY5crr2KKv1O3chPr--oMba97elY0y9Dw0q2ipKcTm4pE7bbFP8t7-a_RKU4OyXuHRIQXjw3gEDCYXY5Hp22KMY0idnRIPhat6fybxcRfeyzUzdnubRBkDMNklwlgNCyeu2ROqEOYegtu5727Wwvy2I-xW-ZVoXg0rggVu7jVq6zmBqDFIcu50IS9R4P6a244pg2STlBaAGpzT2VfUqCBZrbtBOvdmdNzxSKIkl1AXeOIZOixo1186PX54p92ehXfCbcTgWrQSLuAAg_tBa6T7UFKFOGecVFo3v0vkmE__Q5-701f1qqcdDRNlOG-bzzFh9QLEdJWlpEajwYQ1ZjTAlbnBpKy3IrU0Aa-Jr0aqxtzgr5ZlghNtOcdYYRw5_BN0BOMmAnkvtm0_xzIJSsFbWJQJ8QpPk_n4zKZf-Y";
@@ -31,7 +31,7 @@ export type GradeSeperated<T> = {
 export function byGrade<T>(
   value: GradeSeperated<T>,
   grade: Grade | "Overall",
-  def: T
+  def: T,
 ): T {
   return grade === "Overall" ? value.overall : value.grades[grade] ?? def;
 }
@@ -39,7 +39,7 @@ export function byGrade<T>(
 export function useByGrade<T>(
   value: GradeSeperated<T>,
   grade: Grade | "Overall",
-  def: T
+  def: T,
 ): T {
   return useMemo(() => byGrade(value, grade, def), [value, grade, def]);
 }
@@ -50,7 +50,7 @@ export type EventExcellenceAwards = {
 };
 
 export function useEventExcellenceAwards(
-  event: Event | null | undefined
+  event: Event | null | undefined,
 ): UseQueryResult<EventExcellenceAwards[] | null> {
   return useQuery(["excellence_awards", event?.sku], async () => {
     if (!event) {
@@ -94,7 +94,7 @@ export function useEventExcellenceAwards(
 export type EventTeams = GradeSeperated<Team[]>;
 
 export function useEventRegisteredTeams(
-  event: Event | null | undefined
+  event: Event | null | undefined,
 ): UseQueryResult<EventTeams> {
   return useQuery(["teams", event?.sku], async () => {
     if (!event) {
@@ -105,7 +105,7 @@ export function useEventRegisteredTeams(
     const teamsData = teamsResponse.data || [];
     const grades = Object.groupBy(
       teamsData,
-      (t) => t.grade || "Unknown"
+      (t) => t.grade || "Unknown",
     ) as Partial<Record<Grade, Team[]>>;
 
     return { overall: teamsData, grades };
@@ -116,7 +116,7 @@ export type EventDivisionRankings = GradeSeperated<Ranking[]>;
 export type EventRankings = Record<number, EventDivisionRankings>;
 
 export function useEventRankings(
-  event: Event | null | undefined
+  event: Event | null | undefined,
 ): UseQueryResult<EventRankings> {
   const { data: teams } = useEventRegisteredTeams(event);
 
@@ -135,7 +135,7 @@ export function useEventRankings(
         const grades = Object.groupBy(
           rankingsData,
           (r) =>
-            teams.overall.find((t) => t.id === r.team?.id)?.grade || "Unknown"
+            teams.overall.find((t) => t.id === r.team?.id)?.grade || "Unknown",
         ) as Partial<Record<string, Ranking[]>>;
 
         const processedGrades = Object.fromEntries(
@@ -144,7 +144,7 @@ export function useEventRankings(
               grade,
               (rankings || []).sort((a, b) => (a.rank || 0) - (b.rank || 0)),
             ];
-          })
+          }),
         );
 
         return [
@@ -154,19 +154,19 @@ export function useEventRankings(
             grades: processedGrades,
           },
         ] as const;
-      })
+      }),
     );
 
     return Object.fromEntries(
       rankingsByDivision.filter(
-        (item): item is [number, EventDivisionRankings] => item !== null
-      )
+        (item): item is [number, EventDivisionRankings] => item !== null,
+      ),
     );
   });
 }
 
 export function useEventPresentTeams(
-  event: Event | null | undefined
+  event: Event | null | undefined,
 ): UseQueryResult<GradeSeperated<Team[]>> {
   const { data: rankings } = useEventRankings(event);
   const { data: teams } = useEventRegisteredTeams(event);
@@ -196,7 +196,7 @@ export function useEventPresentTeams(
 
     const grades = Object.groupBy(
       presentTeams,
-      (t) => t.grade || "Unknown"
+      (t) => t.grade || "Unknown",
     ) as Partial<Record<Grade, Team[]>>;
 
     return {
@@ -209,7 +209,7 @@ export function useEventPresentTeams(
 export type EventTeamsByDivision = Record<number, EventTeams>;
 
 export function useEventTeamsByDivision(
-  event: Event | null | undefined
+  event: Event | null | undefined,
 ): UseQueryResult<EventTeamsByDivision> {
   const { data: rankings } = useEventRankings(event);
   const { data: teams } = useEventRegisteredTeams(event);
@@ -232,7 +232,7 @@ export function useEventTeamsByDivision(
             overall: new Set(
               rankings[division.id].overall
                 .map((r) => r.team?.id)
-                .filter(Boolean)
+                .filter(Boolean),
             ),
             grades: Object.fromEntries(
               Object.entries(rankings[division.id].grades).map(
@@ -241,10 +241,10 @@ export function useEventTeamsByDivision(
                   new Set(
                     (divRankings as Ranking[])
                       .map((r) => r.team?.id)
-                      .filter(Boolean)
+                      .filter(Boolean),
                   ),
-                ]
-              )
+                ],
+              ),
             ),
           };
 
@@ -258,19 +258,19 @@ export function useEventTeamsByDivision(
               (gradeTeams || []).filter((t) =>
                 divisionTeams.grades[grade]?.has(t.id)
               ),
-            ])
+            ]),
           );
 
           return [division.id, { overall, grades }] as const;
-        })
+        }),
       );
 
       return Object.fromEntries(
         teamsByDivision.filter(
-          (item): item is [number, EventTeams] => item !== null
-        )
+          (item): item is [number, EventTeams] => item !== null,
+        ),
       );
-    }
+    },
   );
 }
 
@@ -285,7 +285,7 @@ export type EventSkills = GradeSeperated<TeamRecord[]> & {
 };
 
 export function useEventSkills(
-  event: Event | null | undefined
+  event: Event | null | undefined,
 ): UseQueryResult<EventSkills> {
   const { data: teams } = useEventRegisteredTeams(event);
 
@@ -302,13 +302,13 @@ export function useEventSkills(
     const grades: Partial<Record<Grade, TeamRecord[]>> = {};
 
     for (const team of teams.overall) {
-      const driver =
-        skillsData.find((s) => s.team?.id === team.id && s.type === "driver") ??
+      const driver = skillsData.find((s) =>
+        s.team?.id === team.id && s.type === "driver"
+      ) ??
         null;
-      const programming =
-        skillsData.find(
-          (s) => s.team?.id === team.id && s.type === "programming"
-        ) ?? null;
+      const programming = skillsData.find(
+        (s) => s.team?.id === team.id && s.type === "programming",
+      ) ?? null;
       const overall = (driver?.score ?? 0) + (programming?.score ?? 0);
 
       const record = {
@@ -336,7 +336,7 @@ export function useEventSkills(
         Object.entries(grades).map(([grade, skills]) => [
           grade,
           skills?.sort((a, b) => b.overall - a.overall) ?? [],
-        ])
+        ]),
       ),
     };
   });
@@ -368,4 +368,77 @@ export function useEventsToday(): UseQueryResult<Event[]> {
     const eventsData = eventsResponse.data || [];
     return eventsData.sort((a, b) => a.name.localeCompare(b.name));
   });
+}
+
+const roundUnknown = 0;
+const roundOrder = [
+  robotevents.rounds.Practice,
+  robotevents.rounds.Qualification,
+  robotevents.rounds.RoundRobin,
+  robotevents.rounds.RoundOf16,
+  robotevents.rounds.Quarterfinals,
+  robotevents.rounds.Semifinals,
+  robotevents.rounds.Finals,
+  robotevents.rounds.TopN,
+  roundUnknown,
+] as number[];
+
+export function logicalMatchComparison(
+  a: robotevents.MatchData,
+  b: robotevents.MatchData,
+) {
+  if (a.round !== b.round) {
+    return roundOrder.indexOf(a.round) - roundOrder.indexOf(b.round);
+  }
+
+  if (a.instance !== b.instance) {
+    return a.instance - b.instance;
+  }
+
+  if (a.matchnum !== b.matchnum) {
+    return a.matchnum - b.matchnum;
+  }
+
+  // League events may have multiple quals/practice with the same matchnum, so
+  // sort by scheduled time.
+  if (a.scheduled || b.scheduled) {
+    const scheduledA = new Date(a.scheduled ?? 0).getTime();
+    const scheduledB = new Date(b.scheduled ?? 0).getTime();
+    return scheduledA - scheduledB;
+  }
+
+  return 0;
+}
+
+export function getUseEventMatchesForTeamQueryParams(
+  event: robotevents.EventData | null | undefined,
+  teamData: robotevents.TeamData | null | undefined,
+): UseQueryOptions<robotevents.Match[]> {
+  return {
+    queryKey: ["team_matches", event?.sku, teamData?.number],
+    queryFn: async () => {
+      if (!event || !teamData) {
+        return [];
+      }
+      const team = new Team(teamData, client.api);
+      const result = await team.matches({ "event[]": [event.id] });
+
+      if (!result.data) {
+        return [];
+      }
+
+      const matches = result.data;
+      return matches.sort(logicalMatchComparison);
+    },
+    staleTime: 1000 * 60,
+  };
+}
+
+export function useEventMatchesForTeam(
+  event: robotevents.EventData | null | undefined,
+  teamData: robotevents.TeamData | null | undefined,
+) {
+  return useQuery(
+    getUseEventMatchesForTeamQueryParams(event, teamData),
+  );
 }
