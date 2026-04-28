@@ -3,78 +3,80 @@ import * as robotevents from "robotevents";
 import { useEventMatchesForTeam } from "../util/eventHooks";
 
 export type DivisionAssignment = {
-  divisionId: number;
-  divisionName: string;
-  event: robotevents.EventData;
-  teamData: robotevents.TeamData;
+    divisionId: number;
+    divisionName: string;
+    event: robotevents.EventData;
+    teamData: robotevents.TeamData;
 };
 
 type TeamAssignmentItemProps = {
-  teamNumber: string;
-  assignment?: DivisionAssignment;
+    teamNumber: string;
+    assignment?: DivisionAssignment;
 };
 
 
 const TeamAssignmentItem: React.FC<TeamAssignmentItemProps> = ({
-  teamNumber,
-  assignment,
+    teamNumber,
+    assignment,
 }) => {
-  const { data: matches, isLoading } = useEventMatchesForTeam(
-    assignment?.event,
-    assignment?.teamData
-  );
+    const { data: matches, isLoading } = useEventMatchesForTeam(
+        assignment?.event,
+        assignment?.teamData
+    );
 
-  const upcomingMatch = useMemo(() => {
-    if (!matches || matches.length === 0) {
-      return null;
-    }
-
-    const now = Date.now();
-    return (
-      matches.find((match) => {
-        if (!match.scheduled) {
-          return false;
+    const upcomingMatch = useMemo(() => {
+        if (!matches || matches.length === 0) {
+            return null;
         }
 
-        return new Date(match.scheduled).getTime() >= now;
-      }) ?? matches[0]
-    );
-  }, [matches]);
+        const now = Date.now();
+        return (
+            matches.find((match) => {
+                if (!match.scheduled) {
+                    return false;
+                }
 
-  const upcomingMatchTime = useMemo(() => {
-    if (!upcomingMatch?.scheduled) {
-      return "TBD";
+                return new Date(match.scheduled).getTime() >= now;
+            }) ?? matches[0]
+        );
+    }, [matches]);
+
+    const upcomingMatchTime = useMemo(() => {
+        if (!upcomingMatch?.scheduled) {
+            return "TBD";
+        }
+
+        return new Date(upcomingMatch.scheduled).toLocaleTimeString([], {
+            hour: "numeric",
+            minute: "2-digit",
+        });
+    }, [upcomingMatch]);
+
+
+    if (!assignment) {
+        return (
+            <section>
+                {teamNumber}
+                <span className="ml-2 font-bold text-rose-600">Not found</span>
+            </section>
+        );
     }
 
-    return new Date(upcomingMatch.scheduled).toLocaleTimeString([], {
-      hour: "numeric",
-      minute: "2-digit",
-    });
-  }, [upcomingMatch]);
-
-
-  if (!assignment) {
     return (
-      <li>
-        {teamNumber}
-        <span className="ml-2 font-bold text-rose-600">Not found</span>
-      </li>
+        <section className="mt-4 p-4 rounded bg-zinc-900">
+            <p>
+                {teamNumber}
+                <span className="ml-2 font-bold text-emerald-500">
+                    {assignment.divisionName}
+                </span>
+            </p>
+            <p className="italic">
+                {isLoading
+                    ? "Loading match..."
+                    : `${upcomingMatch?.name} at ${upcomingMatchTime}`}
+            </p>
+        </section>
     );
-  }
-
-  return (
-    <li>
-      {teamNumber}
-      <span className="ml-2 font-bold text-emerald-500">
-        {assignment.divisionName}
-      </span>
-      <span className="ml-2 text-white italic">
-        {isLoading
-          ? "Loading match..."
-          : `Next match: ${upcomingMatch?.name} at ${upcomingMatchTime}`}
-      </span>
-    </li>
-  );
 };
 
 export default TeamAssignmentItem;
